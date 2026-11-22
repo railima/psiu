@@ -1,7 +1,9 @@
 # PyInstaller: gera Psiu.app (macOS) ou Psiu.exe (Windows).
 # Use os scripts build_mac.sh / build_windows.bat em vez de chamar direto.
+import os
 import sys
 
+VERSION = os.environ.get("PSIU_VERSION", "0.0.0-dev").lstrip("v")  # o workflow passa a tag (ex.: v0.1.0)
 binaries = [("mac/mac-recorder", ".")] if sys.platform == "darwin" else []
 
 a = Analysis(["app.py"], binaries=binaries, datas=[("ui/index.html", "ui"), ("ui/icon.png", "ui")])
@@ -16,7 +18,7 @@ if sys.platform == "darwin":
         icon="icon/Psiu.icns",
         bundle_identifier="io.github.railima.psiu",
         info_plist={
-            "CFBundleShortVersionString": "1.0",
+            "CFBundleShortVersionString": VERSION,
             "LSMinimumSystemVersion": "15.0",
             "NSHighResolutionCapable": True,
             "NSMicrophoneUsageDescription": "O Psiu grava o seu microfone durante as reuniões.",

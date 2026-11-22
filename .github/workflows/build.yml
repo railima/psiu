@@ -1,0 +1,73 @@
+# Gera Psiu.exe (Windows) e Psiu.dmg (macOS).
+# - Rodar manualmente (aba Actions → Build → Run workflow): os arquivos ficam nos "Artifacts" da execução.
+# - Publicar uma tag "v*" (ex.: git tag v0.1.0 && git push --tags): cria uma Release com os dois anexos.
+name: Build
+
+on:
+  push:
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PSIU_VERSION: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || '0.0.0-dev' }}
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Instalar dependências
+        run: python -m pip install pywebview pyinstaller PyAudioWPatch numpy
+      - name: Conferir imports
+        run: python -c "import app, gravar_windows, atalhos"
+      - name: Empacotar
+        run: pyinstaller --noconfirm --clean psiu.spec
+      - uses: actions/upload-artifact@v7
+        with:
+          name: Psiu-windows
+          path: dist/Psiu.exe
+          if-no-files-found: error
+
+  macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10
+      - name: Empacotar
+        run: ./build_mac.sh
+      - uses: actions/upload-artifact@v7
+        with:
+          name: Psiu-macos
+          path: dist/Psiu.dmg
+          if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [windows, macos]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          path: dist
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v3
+        with:
+          files: |
+            dist/Psiu.exe
+            dist/Psiu.dmg
+          generate_release_notes: true
+          body: |
+            ## Download
+            - **Windows:** `Psiu.exe` — executável único; na primeira vez o SmartScreen pode avisar: *Mais informações → Executar assim mesmo*.
+            - **macOS 15+:** `Psiu.dmg` — arraste para Aplicativos; na primeira vez, botão direito → *Abrir*.
+
+            Você vai precisar de uma API key da [Deepgram](https://console.deepgram.com).
