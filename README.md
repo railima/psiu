@@ -40,6 +40,9 @@ costumam ganhar créditos grátis.
 
 ## Instalação
 
+**Baixe pronto** na página de [Releases](https://github.com/railima/psiu/releases): `Psiu.exe` (Windows) ou
+`Psiu.dmg` (macOS 15+). Ou compile você mesmo:
+
 ### macOS (15 ou mais recente)
 
 Requer as Xcode Command Line Tools (`xcode-select --install`) e o [uv](https://docs.astral.sh/uv/).
@@ -94,6 +97,15 @@ icon/make_icon.py      gera o ícone
 
 Para desenvolver sem empacotar: `uv run --with pywebview python app.py` (macOS, depois de `./mac/build.sh`).
 Na linha de comando: `python reuniao.py "nome da reunião"` (Enter para parar).
+
+### Publicar uma versão
+
+O workflow [`build.yml`](.github/workflows/build.yml) compila o `.exe` e o `.dmg` a cada pull request e
+quando rodado manualmente (aba Actions). Para publicar uma Release com os dois anexos:
+
+```sh
+git tag v0.1.0 && git push --tags
+```
 
 ## Licença
 
