@@ -1,0 +1,26 @@
+# Segredos — nunca versionar
+deepgram_key.txt
+.env
+*.key
+
+# Gravações e respostas da API (caso alguém grave dentro da pasta do projeto)
+gravacoes/
+*.m4a
+*.wav
+*.ogg
+deepgram_*.json
+transcript.*
+meta.json
+
+# Build
+mac/mac-recorder
+build/
+dist/
+.venv/
+__pycache__/
+*.pyc
+icon/*.iconset/
+
+# Sistema
+.DS_Store
+Thumbs.db
