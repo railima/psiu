@@ -8,6 +8,7 @@ import threading
 from datetime import datetime
 from pathlib import Path
 
+from i18n import t
 from transcrever import ROOT, RECORDINGS_DIR
 
 
@@ -47,7 +48,8 @@ class MacRecorder:
         )
         if self.proc.stdout.readline().strip() != "GRAVANDO":
             self.proc.wait()
-            raise RecorderError(self.proc.stderr.read().strip() or "Não foi possível iniciar a gravação.")
+            detail = self.proc.stderr.readline().strip()
+            raise RecorderError(t("err_record_start", detail=detail) + "\n\n" + t("err_mac_permission"))
         threading.Thread(target=self._read_levels, daemon=True).start()
 
     def _read_levels(self):
@@ -72,4 +74,4 @@ def create_recorder(folder):
         from gravar_windows import WindowsRecorder
 
         return WindowsRecorder(folder)
-    raise RecorderError("Sistema não suportado (use macOS ou Windows).")
+    raise RecorderError(t("err_unsupported"))

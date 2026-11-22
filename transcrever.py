@@ -8,6 +8,7 @@ import argparse
 import difflib
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -15,6 +16,9 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from pathlib import Path
+
+from config import load_config
+from i18n import t
 
 ROOT = Path(__file__).resolve().parent
 RECORDINGS_DIR = Path.home() / "Documents" / "Psiu"
@@ -26,32 +30,13 @@ class TranscriptionError(Exception):
     pass
 
 
-def config_path():
-    if sys.platform == "win32":
-        base = Path(os.environ.get("APPDATA", Path.home()))
-    else:
-        base = Path.home() / "Library" / "Application Support"
-    return base / "Psiu" / "config.json"
-
-
-def load_config():
-    path = config_path()
-    return json.loads(path.read_text()) if path.exists() else {}
-
-
-def save_config(**values):
-    path = config_path()
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps({**load_config(), **values}))
-
-
 def api_key():
     key = os.environ.get("DEEPGRAM_API_KEY") or load_config().get("deepgram_key")
     key_file = ROOT / "deepgram_key.txt"
     if not key and key_file.exists():
         key = key_file.read_text().strip()
     if not key:
-        raise TranscriptionError("Chave da Deepgram não configurada.")
+        raise TranscriptionError(t("err_no_key"))
     return key
 
 
@@ -96,9 +81,9 @@ def deepgram(path, language, diarize):
         with urllib.request.urlopen(request, timeout=1800) as response:
             return json.load(response)
     except urllib.error.HTTPError as e:
-        raise TranscriptionError(f"Erro da Deepgram ({e.code}): {e.read().decode(errors='replace')}") from e
+        raise TranscriptionError(t("err_deepgram", code=e.code, detail=e.read().decode(errors="replace"))) from e
     except urllib.error.URLError as e:
-        raise TranscriptionError(f"Sem conexão com a Deepgram: {e.reason}") from e
+        raise TranscriptionError(t("err_offline", reason=e.reason)) from e
 
 
 def transcribe_track(folder, name, language, diarize, force, progress):
@@ -110,7 +95,7 @@ def transcribe_track(folder, name, language, diarize, force, progress):
     if path is None:
         return None
     path = compress_if_possible(path)
-    progress(f"Enviando {path.name} ({path.stat().st_size / 1e6:.1f} MB)...")
+    progress(t("progress_uploading", file=path.name, size=path.stat().st_size / 1e6))
     result = deepgram(path, language, diarize)
     cache.write_text(json.dumps(result, ensure_ascii=False))
     return result
@@ -168,9 +153,42 @@ def save_meta(folder, **values):
     path.write_text(json.dumps({**load_meta(folder), **values}, ensure_ascii=False), encoding="utf-8")
 
 
+# Falantes são guardados com identificadores neutros ("me", "speaker:1", ...) e traduzidos só na exibição.
+ME = "me"
+
+
+def speaker_id(n):
+    return f"speaker:{n}"
+
+
+def _legacy_speaker(speaker):
+    """Converte rótulos das primeiras versões ("Eu", "Pessoa 2") para os identificadores atuais."""
+    if speaker == "Eu":
+        return ME
+    match = re.fullmatch(r"Pessoa (\d+)", speaker)
+    return speaker_id(match.group(1)) if match else speaker
+
+
+def default_label(speaker):
+    if speaker == ME:
+        return t("me")
+    if speaker.startswith("speaker:"):
+        return t("speaker", n=speaker.split(":", 1)[1])
+    return speaker
+
+
+def display_name(speaker, names):
+    return names.get(speaker) or default_label(speaker)
+
+
 def load_lines(folder):
     path = Path(folder) / "transcript.json"
-    return json.loads(path.read_text(encoding="utf-8")) if path.exists() else None
+    if not path.exists():
+        return None
+    lines = json.loads(path.read_text(encoding="utf-8"))
+    for u in lines:
+        u["speaker"] = _legacy_speaker(u["speaker"])
+    return lines
 
 
 def render_markdown(folder, timestamps=True):
@@ -180,30 +198,28 @@ def render_markdown(folder, timestamps=True):
     lines = load_lines(folder) or []
     names = meta["names"]
 
-    def name(speaker):
-        return names.get(speaker) or speaker
-
-    items = [dict(u) for u in lines] + [{"start": t, "mark": True} for t in meta["marks"]]
+    items = [dict(u) for u in lines] + [{"start": s, "mark": True} for s in meta["marks"]]
     items.sort(key=lambda u: u["start"])
 
     speakers = list(dict.fromkeys(u["speaker"] for u in lines))
     duration = timestamp(lines[-1]["end"]) if lines else "00:00:00"
+    participants = ", ".join(display_name(s, names) for s in speakers) or "—"
     out = [
-        f"# Transcrição da reunião — {meta['title'] or folder.name}",
+        "# " + t("md_title", title=meta["title"] or folder.name),
         "",
-        f"Duração: {duration}. Participantes: {', '.join(name(s) for s in speakers) or '—'}.",
+        t("md_summary", duration=duration, participants=participants),
     ]
-    if any(s.startswith("Pessoa ") and s not in names for s in speakers):
-        out.append("(\"Pessoa N\" são participantes identificados pela voz, sem nome.)")
+    if any(s.startswith("speaker:") and s not in names for s in speakers):
+        out.append(t("md_unnamed_note"))
     if meta["marks"]:
-        out.append("⭐ indica um momento marcado como importante durante a reunião.")
+        out.append(t("md_marks_note"))
     out.append("")
     for u in items:
         prefix = f"[{timestamp(u['start'])}] " if timestamps else ""
         if u.get("mark"):
-            out.append(f"{prefix}⭐ **Momento marcado**")
+            out.append(f"{prefix}⭐ **{t('marked_moment')}**")
         else:
-            out.append(f"{prefix}**{name(u['speaker'])}:** {u['text']}")
+            out.append(f"{prefix}**{display_name(u['speaker'], names)}:** {u['text']}")
     return "\n".join(out) + "\n"
 
 
@@ -224,14 +240,14 @@ def copy_to_clipboard(text):
 
 def transcribe_folder(folder, language="multi", force=False, progress=print):
     folder = Path(folder)
-    progress("Transcrevendo...")
+    progress(t("progress_transcribing"))
     mic = transcribe_track(folder, "mic", language, diarize=False, force=force, progress=progress)
     system = transcribe_track(folder, "sistema", language, diarize=True, force=force, progress=progress)
     if mic is None and system is None:
-        raise TranscriptionError(f"Nenhum áudio encontrado em {folder}.")
+        raise TranscriptionError(t("err_no_audio", folder=folder))
 
-    others = utterances(system, lambda u: f"Pessoa {u.get('speaker', 0) + 1}")
-    mine = drop_echo(utterances(mic, lambda u: "Eu"), others)
+    others = utterances(system, lambda u: speaker_id(u.get("speaker", 0) + 1))
+    mine = drop_echo(utterances(mic, lambda u: ME), others)
     lines = merge(mine + others)
 
     (folder / "transcript.json").write_text(json.dumps(lines, ensure_ascii=False), encoding="utf-8")
@@ -249,4 +265,4 @@ if __name__ == "__main__":
     except TranscriptionError as e:
         sys.exit(str(e))
     copy_to_clipboard(md.read_text(encoding="utf-8"))
-    print(f"Pronto: {md}  (copiado para a área de transferência)")
+    print(t("cli_done", path=md))

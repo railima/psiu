@@ -12,16 +12,20 @@ from pathlib import Path
 import webview
 
 import atalhos
+import i18n
+from config import load_config, save_config
 from gravador import RecorderError, create_recorder, session_folder
+from i18n import t
 from transcrever import (
+    ME,
     RECORDINGS_DIR,
     TranscriptionError,
     copy_to_clipboard,
-    load_config,
+    default_label,
+    display_name,
     load_lines,
     load_meta,
     render_markdown,
-    save_config,
     save_meta,
     transcribe_folder,
     write_markdown,
@@ -30,42 +34,10 @@ from transcrever import (
 UI_DIR = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent)) / "ui"
 DEEPGRAM_PRICE_PER_MINUTE = 0.0052  # Nova-3 multilíngue, pré-gravado; cobrado por trilha (mic + sistema)
 
-PROMPTS = {
-    "resumo": (
-        "Resumo e decisões",
-        "Abaixo está a transcrição de uma reunião (pode estar em português, inglês ou misturado). "
-        "\"Eu\" sou eu, quem gravou. Responda em português com:\n"
-        "1. Um resumo curto do que foi discutido;\n"
-        "2. As decisões tomadas;\n"
-        "3. Os próximos passos, com responsável e prazo quando mencionados;\n"
-        "4. Pontos em aberto ou dúvidas que ficaram.\n"
-        "Dê atenção especial aos momentos marcados com ⭐.",
-    ),
-    "tarefas": (
-        "Lista de tarefas",
-        "Abaixo está a transcrição de uma reunião. \"Eu\" sou eu, quem gravou. Extraia todas as tarefas e "
-        "compromissos assumidos, em português, como uma checklist agrupada por pessoa (comece pelas minhas). "
-        "Inclua prazo e contexto quando houver. Não invente tarefas que não foram mencionadas.",
-    ),
-    "brainstorm": (
-        "Brainstorm",
-        "Abaixo está a transcrição de uma conversa. \"Eu\" sou eu, quem gravou. Use-a como ponto de partida "
-        "para um brainstorm em português: liste as principais ideias que surgiram, aprofunde as mais "
-        "promissoras, proponha ideias novas que não foram citadas e aponte riscos ou pontos cegos.",
-    ),
-    "email": (
-        "E-mail de follow-up",
-        "Abaixo está a transcrição de uma reunião. \"Eu\" sou eu, quem gravou. Escreva um e-mail de follow-up "
-        "curto e cordial para os participantes, no idioma predominante da reunião, com um resumo, as decisões "
-        "e os próximos passos com responsáveis.",
-    ),
-}
-
-
 def _in_recordings(folder):
     path = Path(folder).resolve()
     if RECORDINGS_DIR.resolve() not in path.parents:
-        raise ValueError(f"Pasta fora de {RECORDINGS_DIR}: {folder}")
+        raise ValueError(f"Folder outside {RECORDINGS_DIR}: {folder}")
     return path
 
 
@@ -89,7 +61,8 @@ class Api:
             "language": config.get("language", "multi"),
             "timestamps": config.get("timestamps", True),
             "recordings": self._recordings(),
-            "prompts": [{"id": k, "label": label} for k, (label, _) in PROMPTS.items()],
+            "ui_language": i18n.language(),
+            "prompts": [{"id": k, "label": label} for k, (label, _) in i18n.prompts().items()],
             "hotkeys": atalhos.labels() if self.hotkeys_ok else None,
         }
 
@@ -109,6 +82,11 @@ class Api:
 
     def save_key(self, key):
         save_config(deepgram_key=key.strip())
+        return self.state()
+
+    def set_ui_language(self, lang):
+        if lang in i18n.LANGUAGES:
+            save_config(ui_language=lang)
         return self.state()
 
     def set_timestamps(self, enabled):
@@ -209,7 +187,7 @@ class Api:
             # Gravações de versões anteriores: regera a partir das respostas salvas da Deepgram (sem custo).
             if (folder / "deepgram_sistema.json").exists() or (folder / "deepgram_mic.json").exists():
                 return self.transcribe(str(folder), load_config().get("language", "multi"))
-            return {"error": "Esta gravação ainda não foi transcrita.", "folder": str(folder)}
+            return {"error": t("err_not_transcribed"), "folder": str(folder)}
         return self._payload(folder)
 
     def _payload(self, folder):
@@ -217,15 +195,19 @@ class Api:
         lines = load_lines(folder) or []
         meta = load_meta(folder)
         minutes = (lines[-1]["end"] / 60) if lines else 0
+        speakers = list(dict.fromkeys(u["speaker"] for u in lines))
         return {
             "ok": True,
             "folder": str(folder),
             "name": folder.name,
             "title": meta["title"],
-            "names": meta["names"],
             "marks": meta["marks"],
             "lines": lines,
-            "speakers": list(dict.fromkeys(u["speaker"] for u in lines)),
+            "speakers": speakers,
+            "me": ME,
+            # Nome exibido de cada falante (renomeado ou o padrão traduzido) e o padrão, para o placeholder.
+            "labels": {s: display_name(s, meta["names"]) for s in speakers},
+            "defaults": {s: default_label(s) for s in speakers},
             "duration": minutes * 60,
             "cost": minutes * DEEPGRAM_PRICE_PER_MINUTE * 2,
         }
@@ -233,7 +215,7 @@ class Api:
     def rename_speaker(self, folder, speaker, name):
         folder = _in_recordings(folder)
         names = load_meta(folder)["names"]
-        if name.strip() and name.strip() != speaker:
+        if name.strip() and name.strip() != default_label(speaker):
             names[speaker] = name.strip()
         else:
             names.pop(speaker, None)
@@ -248,9 +230,12 @@ class Api:
         return self.state()["recordings"]
 
     def copy(self, folder, prompt_id, timestamps):
-        text = render_markdown(_in_recordings(folder), timestamps=timestamps)
-        if prompt_id in PROMPTS:
-            text = f"{PROMPTS[prompt_id][1]}\n\n---\n\n{text}"
+        folder = _in_recordings(folder)
+        text = render_markdown(folder, timestamps=timestamps)
+        prompts = i18n.prompts()
+        if prompt_id in prompts:
+            me = display_name(ME, load_meta(folder)["names"])
+            text = f"{prompts[prompt_id][1].format(me=me)}\n\n---\n\n{text}"
         copy_to_clipboard(text)
         return True
 

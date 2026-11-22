@@ -34,6 +34,8 @@ pronto para colar no Claude (ou outra IA) e pedir um resumo, uma lista de tarefa
 - **Copiar com prompt**: resumo e decisões, lista de tarefas, brainstorm ou e-mail de follow-up, com ou sem
   horários.
 - Histórico com busca, título editável e custo estimado de cada gravação.
+- **Interface em inglês ou português** (troque no rodapé da barra lateral); os rótulos do transcript e os
+  prompts seguem o idioma escolhido. O padrão é inglês.
 
 ## Custo
 
@@ -95,6 +97,8 @@ gravador.py            escolhe o gravador da plataforma
 transcrever.py         envia à Deepgram, junta as trilhas, remove eco e gera o Markdown
 atalhos.py             atalhos globais (Carbon no macOS, RegisterHotKey no Windows)
 app.py + ui/           interface (pywebview)
+i18n.py                textos em inglês/português usados pelo Python (os da interface ficam em ui/index.html)
+config.py              configurações do usuário (chave, idiomas)
 reuniao.py             versão de linha de comando
 icon/make_icon.py      gera o ícone
 ```

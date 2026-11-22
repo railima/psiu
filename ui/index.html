@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <title>Psiu</title>
@@ -43,6 +43,8 @@
   #history .d { display: block; font-size: 11px; color: var(--muted); }
   #history .pending .t { color: var(--muted); font-style: italic; }
   #history .empty { color: var(--muted); font-size: 13px; padding: 8px; }
+  .side-footer { display: flex; align-items: center; gap: 6px; padding: 10px 16px 14px; border-top: 1px solid var(--border); }
+  .side-footer select { flex: 1; padding: 5px 8px; font-size: 12px; background: transparent; }
 
   /* Área principal */
   main { flex: 1; display: flex; flex-direction: column; padding: 24px 28px; min-width: 0; }
@@ -136,71 +138,78 @@
 <aside>
   <div class="brand"><img src="icon.png" alt="">Psiu</div>
   <div class="side-actions">
-    <button class="btn primary" onclick="newRecording()">● Nova gravação</button>
-    <input id="search" placeholder="Buscar gravações" oninput="renderHistory()">
+    <button class="btn primary" onclick="newRecording()" data-i18n="new_recording"></button>
+    <input id="search" data-i18n-placeholder="search" oninput="renderHistory()">
   </div>
   <div id="history"></div>
+  <div class="side-footer">
+    <label for="ui-language" aria-label="Language">🌐</label>
+    <select id="ui-language" onchange="setUiLanguage(this.value)">
+      <option value="en">English</option>
+      <option value="pt-BR">Português</option>
+    </select>
+  </div>
 </aside>
 
 <main>
   <!-- Configuração da chave -->
   <section class="view center" id="v-setup">
     <img src="icon.png" alt="" width="88" height="88">
-    <h1>Configurar Deepgram</h1>
-    <p class="muted">Cole a sua API key da Deepgram (console.deepgram.com → API Keys). Ela fica salva só neste computador.</p>
+    <h1 data-i18n="setup_title"></h1>
+    <p class="muted" data-i18n="setup_text"></p>
     <div class="row">
       <input id="key" type="password" placeholder="API key" autocomplete="off">
-      <button class="btn primary" onclick="saveKey()">Salvar</button>
+      <button class="btn primary" onclick="saveKey()" data-i18n="save"></button>
     </div>
   </section>
 
   <!-- Pronto para gravar -->
   <section class="view center" id="v-idle">
-    <button class="big" onclick="start()" title="Iniciar gravação"><span class="dot"></span></button>
-    <h1>Iniciar gravação</h1>
+    <button class="big" onclick="start()" data-i18n-title="start_title"><span class="dot"></span></button>
+    <h1 data-i18n="start_title"></h1>
     <div class="row">
-      <input id="name" placeholder="Nome da reunião (opcional)">
-      <select id="language" title="Idioma">
-        <option value="multi">PT + EN</option>
-        <option value="pt-BR">Português</option>
-        <option value="en">Inglês</option>
+      <input id="name" data-i18n-placeholder="name_placeholder">
+      <select id="language" data-i18n-title="transcription_language">
+        <option value="multi" data-i18n="lang_multi"></option>
+        <option value="en" data-i18n="lang_en"></option>
+        <option value="pt-BR" data-i18n="lang_pt"></option>
       </select>
     </div>
-    <p class="muted">Grava o seu microfone e o som do computador, sem entrar na chamada. Use fone de ouvido para um resultado melhor.</p>
+    <p class="muted" data-i18n="idle_tip"></p>
     <p class="muted hotkey-hint" id="hk-idle"></p>
     <p class="error" id="start-error"></p>
-    <button class="link" onclick="show('setup')">Trocar API key</button>
+    <button class="link" onclick="show('setup')" data-i18n="change_key"></button>
   </section>
 
   <!-- Gravando -->
   <section class="view center recording" id="v-recording">
-    <button class="big" onclick="stop()" title="Parar gravação"><span class="square"></span></button>
+    <button class="big" onclick="stop()" data-i18n-title="stop_title"><span class="square"></span></button>
     <div class="timer" id="timer">00:00</div>
     <div class="meters">
-      <label>Você</label><div class="meter"><span id="lvl-mic"></span></div><span class="state" id="st-mic"></span>
-      <label>Computador</label><div class="meter"><span id="lvl-system"></span></div><span class="state" id="st-system"></span>
+      <label data-i18n="meter_you"></label><div class="meter"><span id="lvl-mic"></span></div><span class="state" id="st-mic"></span>
+      <label data-i18n="meter_computer"></label><div class="meter"><span id="lvl-system"></span></div><span class="state" id="st-system"></span>
     </div>
-    <button class="btn mark" onclick="mark()">⭐ Marcar momento <kbd>M</kbd></button>
-    <p class="muted" id="marks-info">Marque trechos importantes para destacá-los no transcript.</p>
+    <button class="btn mark" onclick="mark()"><span data-i18n="mark_button"></span> <kbd>M</kbd></button>
+    <p class="muted" id="marks-info"></p>
     <p class="muted hotkey-hint" id="hk-recording"></p>
   </section>
 
   <!-- Transcrevendo -->
   <section class="view center" id="v-working">
     <div class="spinner"></div>
-    <h1>Transcrevendo…</h1>
-    <p class="muted">Costuma levar menos de um minuto, mesmo para reuniões longas.</p>
+    <h1 data-i18n="working_title"></h1>
+    <p class="muted" data-i18n="working_text"></p>
   </section>
 
   <!-- Erro de transcrição (o áudio fica salvo) -->
   <section class="view center" id="v-failed">
-    <h1>Não foi possível transcrever</h1>
+    <h1 data-i18n="failed_title"></h1>
     <p class="error" id="fail-msg"></p>
-    <p class="muted">O áudio está salvo; você pode tentar de novo.</p>
+    <p class="muted" data-i18n="failed_text"></p>
     <div class="row" style="justify-content:center">
-      <button class="btn primary" onclick="retry()">Tentar de novo</button>
+      <button class="btn primary" onclick="retry()" data-i18n="retry"></button>
       <button class="btn" onclick="show('setup')">API key</button>
-      <button class="btn danger" id="fail-delete" onclick="del(this)">Excluir</button>
+      <button class="btn danger" id="fail-delete" onclick="del(this)" data-i18n="delete"></button>
     </div>
   </section>
 
@@ -213,21 +222,94 @@
       </div>
       <div class="speakers" id="speakers"></div>
       <div class="toolbar">
-        <select id="prompt" title="O que copiar" onchange="savePromptChoice()"></select>
-        <button class="btn primary" onclick="copyText()">Copiar</button>
-        <label><input type="checkbox" id="timestamps" onchange="api.set_timestamps(this.checked)"> Horários</label>
+        <select id="prompt" data-i18n-title="copy_what" onchange="savePromptChoice()"></select>
+        <button class="btn primary" onclick="copyText()" data-i18n="copy"></button>
+        <label><input type="checkbox" id="timestamps" onchange="api.set_timestamps(this.checked)"> <span data-i18n="timestamps"></span></label>
         <span class="spacer"></span>
-        <button class="btn" onclick="api.open_folder(current.folder)">Abrir pasta</button>
-        <button class="btn danger" id="result-delete" onclick="del(this)">Excluir</button>
+        <button class="btn" onclick="api.open_folder(current.folder)" data-i18n="open_folder"></button>
+        <button class="btn danger" id="result-delete" onclick="del(this)" data-i18n="delete"></button>
       </div>
     </div>
     <div id="transcript"></div>
   </section>
 </main>
-<div class="toast" id="toast">Copiado!</div>
+<div class="toast" id="toast"></div>
 
 <script>
-  let api, current = null, recordings = [], hasKey = false, recording = false, timerId = null, meterId = null;
+  // ---------- Traduções (inglês é o padrão) ----------
+
+  const I18N = {
+    en: {
+      new_recording: '● New recording', search: 'Search recordings',
+      setup_title: 'Set up Deepgram',
+      setup_text: 'Paste your Deepgram API key (console.deepgram.com → API Keys). It is stored only on this computer.',
+      save: 'Save', start_title: 'Start recording', name_placeholder: 'Meeting name (optional)',
+      transcription_language: 'Transcription language', lang_multi: 'EN + PT', lang_en: 'English', lang_pt: 'Portuguese',
+      idle_tip: "Records your microphone and your computer's sound, without joining the call. Use headphones for better results.",
+      change_key: 'Change API key', stop_title: 'Stop recording',
+      meter_you: 'You', meter_computer: 'Computer', silent: 'silent',
+      mark_button: '⭐ Mark moment', marks_hint: 'Mark important moments to highlight them in the transcript.',
+      marks_one: '⭐ 1 moment marked.', marks_other: '⭐ {n} moments marked.',
+      hk_idle: 'Global hotkeys, even with the app minimized: {toggle} record/stop · {mark} mark moment',
+      hk_recording: 'In another window? {toggle} stops recording · {mark} marks a moment',
+      working_title: 'Transcribing…', working_text: 'Usually takes less than a minute, even for long meetings.',
+      failed_title: "Couldn't transcribe", failed_text: 'The audio is saved; you can try again.', retry: 'Try again',
+      delete: 'Delete', confirm_delete: 'Confirm delete',
+      untitled: 'Untitled meeting', minutes: '{n} min', participants_one: '1 participant', participants_other: '{n} participants',
+      cost: '≈ {cost} on Deepgram', names: 'Names:', rename: 'Rename "{name}"',
+      copy_what: 'What to copy', copy_only: 'Transcript only', copy_group: 'With a prompt for the AI',
+      copy: 'Copy', timestamps: 'Timestamps', open_folder: 'Open folder',
+      copied: 'Copied!', copied_prompt: 'Copied with prompt! Paste it into Claude.',
+      marked_moment: '⭐ Marked moment', no_speech: 'No speech detected in this recording.',
+      today: 'Today', yesterday: 'Yesterday', last7: 'Last 7 days', other: 'Other',
+      not_transcribed: 'not transcribed', no_recordings: 'No recordings yet.', nothing_found: 'Nothing found.',
+    },
+    'pt-BR': {
+      new_recording: '● Nova gravação', search: 'Buscar gravações',
+      setup_title: 'Configurar Deepgram',
+      setup_text: 'Cole a sua API key da Deepgram (console.deepgram.com → API Keys). Ela fica salva só neste computador.',
+      save: 'Salvar', start_title: 'Iniciar gravação', name_placeholder: 'Nome da reunião (opcional)',
+      transcription_language: 'Idioma da transcrição', lang_multi: 'EN + PT', lang_en: 'Inglês', lang_pt: 'Português',
+      idle_tip: 'Grava o seu microfone e o som do computador, sem entrar na chamada. Use fone de ouvido para um resultado melhor.',
+      change_key: 'Trocar API key', stop_title: 'Parar gravação',
+      meter_you: 'Você', meter_computer: 'Computador', silent: 'em silêncio',
+      mark_button: '⭐ Marcar momento', marks_hint: 'Marque trechos importantes para destacá-los no transcript.',
+      marks_one: '⭐ 1 momento marcado.', marks_other: '⭐ {n} momentos marcados.',
+      hk_idle: 'Atalhos globais, mesmo com o app minimizado: {toggle} grava/para · {mark} marca momento',
+      hk_recording: 'Em outra janela? {toggle} para a gravação · {mark} marca momento',
+      working_title: 'Transcrevendo…', working_text: 'Costuma levar menos de um minuto, mesmo para reuniões longas.',
+      failed_title: 'Não foi possível transcrever', failed_text: 'O áudio está salvo; você pode tentar de novo.', retry: 'Tentar de novo',
+      delete: 'Excluir', confirm_delete: 'Confirmar exclusão',
+      untitled: 'Reunião sem nome', minutes: '{n} min', participants_one: '1 participante', participants_other: '{n} participantes',
+      cost: '≈ {cost} na Deepgram', names: 'Nomes:', rename: 'Renomear "{name}"',
+      copy_what: 'O que copiar', copy_only: 'Só a transcrição', copy_group: 'Com prompt para a IA',
+      copy: 'Copiar', timestamps: 'Horários', open_folder: 'Abrir pasta',
+      copied: 'Copiado!', copied_prompt: 'Copiado com prompt! Cole no Claude.',
+      marked_moment: '⭐ Momento marcado', no_speech: 'Nenhuma fala detectada nesta gravação.',
+      today: 'Hoje', yesterday: 'Ontem', last7: 'Últimos 7 dias', other: 'Outras',
+      not_transcribed: 'não transcrita', no_recordings: 'Nenhuma gravação ainda.', nothing_found: 'Nada encontrado.',
+    },
+  };
+  let lang = 'en';
+
+  function t(key, vars = {}) {
+    const text = (I18N[lang] && I18N[lang][key]) ?? I18N.en[key] ?? key;
+    return text.replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? '');
+  }
+
+  function applyI18n() {
+    document.documentElement.lang = lang;
+    document.querySelectorAll('[data-i18n]').forEach((e) => { e.textContent = t(e.dataset.i18n); });
+    document.querySelectorAll('[data-i18n-placeholder]').forEach((e) => { e.placeholder = t(e.dataset.i18nPlaceholder); });
+    document.querySelectorAll('[data-i18n-title]').forEach((e) => { e.title = t(e.dataset.i18nTitle); });
+    $('ui-language').value = lang;
+  }
+
+  const locale = () => (lang === 'pt-BR' ? 'pt-BR' : 'en-US');
+
+  // ---------- Estado ----------
+
+  let api, current = null, recordings = [], hasKey = false, recording = false, timerId = null, meterId = null, marks = 0;
   const $ = (id) => document.getElementById(id);
   const PALETTE = ['--s1', '--s2', '--s3', '--s4', '--s5', '--s6'];
 
@@ -264,13 +346,13 @@
   }
 
   function groupOf(date) {
-    if (!date) return 'Outras';
+    if (!date) return t('other');
     const today = new Date(); today.setHours(0, 0, 0, 0);
     const days = Math.round((today - new Date(date.getFullYear(), date.getMonth(), date.getDate())) / 864e5);
-    if (days === 0) return 'Hoje';
-    if (days === 1) return 'Ontem';
-    if (days < 7) return 'Últimos 7 dias';
-    return date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+    if (days === 0) return t('today');
+    if (days === 1) return t('yesterday');
+    if (days < 7) return t('last7');
+    return date.toLocaleDateString(locale(), { month: 'long', year: 'numeric' });
   }
 
   function renderHistory() {
@@ -279,45 +361,68 @@
     let lastGroup = null, count = 0;
     for (const r of recordings) {
       const { date, label } = parseName(r.name);
-      const title = r.title || label || 'Reunião sem nome';
+      const title = r.title || label || t('untitled');
       if (q && !(title + ' ' + r.name).toLowerCase().includes(q)) continue;
       const group = groupOf(date);
       if (group !== lastGroup) { box.append(el('div', { className: 'group', textContent: group })); lastGroup = group; }
-      const when = date ? date.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '';
+      const when = date ? date.toLocaleString(locale(), { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '';
       const b = el('button', { title: r.name, onclick: () => openRecording(r.folder) },
         el('span', { className: 't', textContent: title }),
-        el('span', { className: 'd', textContent: r.done ? when : `${when} · não transcrita` }));
+        el('span', { className: 'd', textContent: r.done ? when : `${when} · ${t('not_transcribed')}` }));
       if (!r.done) b.classList.add('pending');
       if (current && current.folder === r.folder) b.classList.add('active');
       box.append(b);
       count++;
     }
-    if (!count) box.append(el('div', { className: 'empty', textContent: q ? 'Nada encontrado.' : 'Nenhuma gravação ainda.' }));
+    if (!count) box.append(el('div', { className: 'empty', textContent: q ? t('nothing_found') : t('no_recordings') }));
+  }
+
+  let hotkeys = null;
+  function renderHotkeyHints() {
+    if (!hotkeys) return;
+    const k = (label) => `<kbd>${label}</kbd>`;
+    $('hk-idle').innerHTML = t('hk_idle', { toggle: k(hotkeys.toggle), mark: k(hotkeys.mark) });
+    $('hk-recording').innerHTML = t('hk_recording', { toggle: k(hotkeys.toggle), mark: k(hotkeys.mark) });
+  }
+
+  function renderPromptOptions(prompts) {
+    const select = $('prompt'), selected = select.value || store.get('prompt') || '';
+    select.innerHTML = '';
+    select.append(el('option', { value: '', textContent: t('copy_only') }));
+    const group = el('optgroup', { label: t('copy_group') });
+    for (const p of prompts) group.append(el('option', { value: p.id, textContent: p.label }));
+    select.append(group);
+    select.value = [...select.options].some((o) => o.value === selected) ? selected : '';
+  }
+
+  function renderMarksInfo() {
+    $('marks-info').textContent = marks === 0 ? t('marks_hint') : marks === 1 ? t('marks_one') : t('marks_other', { n: marks });
   }
 
   async function refresh() {
     const s = await api.state();
     hasKey = s.has_key;
     recordings = s.recordings;
+    hotkeys = s.hotkeys;
+    if (s.ui_language !== lang) { lang = s.ui_language; applyI18n(); }
     $('language').value = s.language;
     $('timestamps').checked = s.timestamps;
-    if (s.hotkeys) {
-      const k = (label) => `<kbd>${label}</kbd>`;
-      $('hk-idle').innerHTML = `Atalhos globais, mesmo com o app minimizado: ${k(s.hotkeys.toggle)} grava/para · ${k(s.hotkeys.mark)} marca momento`;
-      $('hk-recording').innerHTML = `Em outra janela? ${k(s.hotkeys.toggle)} para a gravação · ${k(s.hotkeys.mark)} marca momento`;
-    }
-    if (!$('prompt').options.length) {
-      $('prompt').append(el('option', { value: '', textContent: 'Só a transcrição' }));
-      const group = el('optgroup', { label: 'Com prompt para a IA' });
-      for (const p of s.prompts) group.append(el('option', { value: p.id, textContent: p.label }));
-      $('prompt').append(group);
-      $('prompt').value = store.get('prompt') || '';
-    }
+    renderHotkeyHints();
+    renderPromptOptions(s.prompts);
+    renderMarksInfo();
     renderHistory();
     return s;
   }
 
   // ---------- Configuração ----------
+
+  async function setUiLanguage(value) {
+    await api.set_ui_language(value);
+    await refresh();
+    // Nomes padrão dos falantes ("Speaker 1"/"Pessoa 1") vêm do Python no idioma atual.
+    if (current && current.lines && !recording) current = await api.open_recording(current.folder);
+    if (current && current.lines && document.querySelector('#v-result.active')) renderResult();
+  }
 
   async function saveKey() {
     const key = $('key').value.trim();
@@ -365,7 +470,8 @@
     tick();
     timerId = setInterval(tick, 500);
     meterId = setInterval(updateMeters, 150);
-    $('marks-info').textContent = 'Marque trechos importantes para destacá-los no transcript.';
+    marks = 0;
+    renderMarksInfo();
     show('recording');
     $('name').value = '';
     refresh();
@@ -379,15 +485,15 @@
       $('lvl-' + k).style.width = Math.round(lv[k] * 100) + '%';
       if (lv[k] > 0.08) silentSince[k] = Date.now();
       const quiet = Date.now() - silentSince[k] > 4000;
-      $('st-' + k).textContent = quiet ? 'em silêncio' : '';
+      $('st-' + k).textContent = quiet ? t('silent') : '';
     }
   }
 
   async function mark(fromHotkey) {
     if (!recording) return;
     if (fromHotkey) api.sound('mark');
-    const n = await api.mark();
-    $('marks-info').textContent = `⭐ ${n} momento${n > 1 ? 's' : ''} marcado${n > 1 ? 's' : ''}.`;
+    marks = await api.mark();
+    renderMarksInfo();
   }
 
   async function stop(fromHotkey) {
@@ -427,28 +533,29 @@
   }
 
   function speakerColor(speaker) {
-    if (speaker === 'Eu') return 'var(--accent)';
-    const i = current.speakers.filter((s) => s !== 'Eu').indexOf(speaker);
+    if (speaker === current.me) return 'var(--accent)';
+    const i = current.speakers.filter((s) => s !== current.me).indexOf(speaker);
     return `var(${PALETTE[i % PALETTE.length]})`;
   }
 
   function renderResult() {
-    const r = current, name = (s) => r.names[s] || s;
+    const r = current, name = (s) => r.labels[s];
     const { label } = parseName(r.name);
     $('title').value = r.title || label || '';
-    $('title').placeholder = 'Reunião sem nome';
+    $('title').placeholder = t('untitled');
 
     const mins = Math.max(1, Math.round(r.duration / 60));
-    const cost = r.cost.toLocaleString('pt-BR', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 });
-    const parts = [`${mins} min`, `${r.speakers.length} participante${r.speakers.length === 1 ? '' : 's'}`, `≈ ${cost} na Deepgram`];
+    const cost = r.cost.toLocaleString(locale(), { style: 'currency', currency: 'USD', minimumFractionDigits: 2 });
+    const n = r.speakers.length;
+    const parts = [t('minutes', { n: mins }), n === 1 ? t('participants_one') : t('participants_other', { n }), t('cost', { cost })];
     if (r.marks.length) parts.splice(2, 0, `${r.marks.length} ⭐`);
     $('stats').textContent = parts.join(' · ');
 
     const sp = $('speakers');
     sp.innerHTML = '';
-    if (r.speakers.length) sp.append(el('span', { className: 'hint', textContent: 'Nomes:' }));
+    if (n) sp.append(el('span', { className: 'hint', textContent: t('names') }));
     for (const s of r.speakers) {
-      const input = el('input', { value: name(s), placeholder: s, spellcheck: false, title: `Renomear "${s}"` });
+      const input = el('input', { value: name(s), placeholder: r.defaults[s], spellcheck: false, title: t('rename', { name: r.defaults[s] }) });
       input.onchange = async () => { current = await api.rename_speaker(r.folder, s, input.value); renderResult(); };
       input.onkeydown = (e) => { if (e.key === 'Enter') input.blur(); };
       const dot = el('i');
@@ -458,12 +565,12 @@
 
     const box = $('transcript');
     box.innerHTML = '';
-    const items = [...r.lines, ...r.marks.map((t) => ({ start: t, mark: true }))].sort((a, b) => a.start - b.start);
+    const items = [...r.lines, ...r.marks.map((m) => ({ start: m, mark: true }))].sort((a, b) => a.start - b.start);
     const withHours = r.duration >= 3600;
     for (const u of items) {
       if (u.mark) {
         box.append(el('div', { className: 'line mark' },
-          el('time', { textContent: clock(u.start, withHours) }), el('div', {}, el('b', { textContent: '⭐ Momento marcado' }))));
+          el('time', { textContent: clock(u.start, withHours) }), el('div', {}, el('b', { textContent: t('marked_moment') }))));
         continue;
       }
       const who = el('b', { textContent: name(u.speaker) });
@@ -471,7 +578,7 @@
       box.append(el('div', { className: 'line' },
         el('time', { textContent: clock(u.start, withHours) }), el('div', {}, who, u.text)));
     }
-    if (!items.length) box.append(el('div', { className: 'empty-transcript', textContent: 'Nenhuma fala detectada nesta gravação.' }));
+    if (!items.length) box.append(el('div', { className: 'empty-transcript', textContent: t('no_speech') }));
     box.scrollTop = 0;
   }
 
@@ -485,18 +592,18 @@
 
   async function copyText() {
     await api.copy(current.folder, $('prompt').value, $('timestamps').checked);
-    const t = $('toast');
-    t.textContent = $('prompt').value ? 'Copiado com prompt! Cole no Claude.' : 'Copiado!';
-    t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 1600);
+    const toast = $('toast');
+    toast.textContent = $('prompt').value ? t('copied_prompt') : t('copied');
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 1600);
   }
 
   // Excluir em dois cliques, sem diálogos do sistema.
-  function resetDelete(b) { b.classList.remove('confirm'); b.textContent = 'Excluir'; clearTimeout(b._t); }
+  function resetDelete(b) { b.classList.remove('confirm'); b.textContent = t('delete'); clearTimeout(b._t); }
   async function del(b) {
     if (!b.classList.contains('confirm')) {
       b.classList.add('confirm');
-      b.textContent = 'Confirmar exclusão';
+      b.textContent = t('confirm_delete');
       b._t = setTimeout(() => resetDelete(b), 4000);
       return;
     }
@@ -513,6 +620,7 @@
     if (recording && (e.key === 'm' || e.key === 'M') && !e.metaKey && !e.ctrlKey) { e.preventDefault(); mark(); }
   });
 
+  applyI18n();
   window.addEventListener('pywebviewready', async () => {
     api = window.pywebview.api;
     const s = await refresh();

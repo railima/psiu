@@ -58,7 +58,7 @@ final class TrackWriter {
                 framesWritten += AVAudioFramePosition(pcm.frameLength)
             }
         } catch {
-            fputs("Erro gravando \(url.lastPathComponent): \(error)\n", stderr)
+            fputs("Error writing \(url.lastPathComponent): \(error)\n", stderr)
         }
     }
 
@@ -98,7 +98,7 @@ final class Recorder: NSObject, SCStreamOutput, SCStreamDelegate {
     func start(outputDir: URL) async throws {
         let content = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: true)
         guard let display = content.displays.first else {
-            throw NSError(domain: "Recorder", code: 1, userInfo: [NSLocalizedDescriptionKey: "Nenhum display encontrado"])
+            throw NSError(domain: "Recorder", code: 1, userInfo: [NSLocalizedDescriptionKey: "No display found"])
         }
         let filter = SCContentFilter(display: display, excludingApplications: [], exceptingWindows: [])
 
@@ -150,7 +150,7 @@ final class Recorder: NSObject, SCStreamOutput, SCStreamDelegate {
     }
 
     func stream(_ stream: SCStream, didStopWithError error: Error) {
-        fputs("Captura interrompida: \(error.localizedDescription)\n", stderr)
+        fputs("Capture stopped: \(error.localizedDescription)\n", stderr)
         exit(1)
     }
 }
@@ -159,7 +159,7 @@ final class Recorder: NSObject, SCStreamOutput, SCStreamDelegate {
 struct Main {
     static func main() async {
         guard CommandLine.arguments.count == 2 else {
-            fputs("Uso: mac-recorder <pasta-de-saida>\n", stderr)
+            fputs("Usage: mac-recorder <output-folder>\n", stderr)
             exit(2)
         }
         let outputDir = URL(fileURLWithPath: CommandLine.arguments[1])
@@ -169,8 +169,9 @@ struct Main {
         do {
             try await recorder.start(outputDir: outputDir)
         } catch {
-            fputs("Falha ao iniciar a captura: \(error.localizedDescription)\n", stderr)
-            fputs("Libere o Psiu (ou o Terminal, se estiver usando pela linha de comando) em Ajustes do Sistema > Privacidade e Segurança > 'Gravação de Tela e Áudio do Sistema' e 'Microfone'. Depois feche e abra o app de novo.\n", stderr)
+            // A primeira linha é mostrada na interface (traduzida pelo Python); a segunda ajuda no terminal.
+            fputs("\(error.localizedDescription)\n", stderr)
+            fputs("Allow Psiu (or your terminal) in System Settings > Privacy & Security > Screen & System Audio Recording and Microphone, then reopen it.\n", stderr)
             exit(1)
         }
         print("GRAVANDO", terminator: "\n")

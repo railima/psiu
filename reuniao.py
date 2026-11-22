@@ -11,6 +11,7 @@ import argparse
 import sys
 
 from gravador import RecorderError, create_recorder, session_folder
+from i18n import t
 from transcrever import TranscriptionError, copy_to_clipboard, transcribe_folder
 
 
@@ -21,14 +22,14 @@ def main():
     args = parser.parse_args()
 
     folder = session_folder(args.nome)
-    print(f"Pasta: {folder}")
+    print(t("cli_folder", folder=folder))
     recorder = create_recorder(folder)
     try:
         recorder.start()
     except RecorderError as e:
         sys.exit(str(e))
     try:
-        input("Gravando... pressione Enter para parar.\n")
+        input(t("cli_recording") + "\n")
     except (KeyboardInterrupt, EOFError):
         print()
     recorder.stop()
@@ -38,7 +39,7 @@ def main():
     except TranscriptionError as e:
         sys.exit(str(e))
     copy_to_clipboard(md.read_text(encoding="utf-8"))
-    print(f"Pronto: {md}  (copiado para a área de transferência)")
+    print(t("cli_done", path=md))
 
 
 if __name__ == "__main__":

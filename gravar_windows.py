@@ -9,6 +9,8 @@ import wave
 import numpy as np
 import pyaudiowpatch as pyaudio
 
+from i18n import t
+
 
 class _Track:
     """Recebe blocos de áudio de um stream e grava em WAV mono, reduzido para 16 kHz quando possível."""
@@ -59,7 +61,7 @@ class WindowsRecorder:
             from gravador import RecorderError
 
             self.stop()
-            raise RecorderError(f"Não foi possível iniciar a gravação: {e}") from e
+            raise RecorderError(t("err_record_start", detail=e)) from e
 
     def _start(self):
         wasapi = self.pa.get_host_api_info_by_type(pyaudio.paWASAPI)
@@ -109,7 +111,7 @@ class WindowsRecorder:
         for dev in self.pa.get_loopback_device_info_generator():
             if speakers["name"] in dev["name"]:
                 return dev
-        raise RuntimeError("não encontrei o dispositivo de loopback da saída de áudio padrão")
+        raise RuntimeError(t("err_no_loopback"))
 
     def _open(self, **kwargs):
         stream = self.pa.open(**kwargs)

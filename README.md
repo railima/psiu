@@ -22,7 +22,6 @@ with the speakers separated, ready to paste into Claude (or another AI) to ask f
 or a brainstorm.
 
 > *Psiu* (pronounced "pee-SEW") is how Brazilians say "psst!": the quiet app that stays out of your meetings.
-> The interface is currently in Portuguese.
 
 ## Features
 
@@ -34,10 +33,12 @@ or a brainstorm.
   `⌃⌥M` / `Ctrl+Alt+M` marks an important moment. A sound confirms each action.
 - **Live level meters** for both tracks (warns you if one of them is silent).
 - **⭐ Mark moments** during the meeting; they are highlighted in the transcript.
-- **Rename speakers** ("Pessoa 1" → "Ana") across the whole transcript.
+- **Rename speakers** ("Speaker 1" → "Ana") across the whole transcript.
 - **Copy with a prompt**: summary and decisions, task list, brainstorm or follow-up email, with or without
   timestamps.
 - Searchable history, editable titles and an estimated cost for each recording.
+- **Interface in English or Portuguese** (switch at the bottom of the sidebar); transcript labels and prompts
+  follow the chosen language.
 
 ## Cost
 
@@ -75,7 +76,7 @@ Optional: `winget install ffmpeg` lets Psiu compress the audio before uploading 
 1. Open Psiu and paste your Deepgram API key ([console.deepgram.com](https://console.deepgram.com) →
    API Keys). It is stored only on your computer.
 2. Click the red button (or press `⌃⌥R` / `Ctrl+Alt+R`) to record, and again to stop.
-3. The transcript shows up on screen. Rename the speakers, pick a prompt and click **Copiar** (Copy).
+3. The transcript shows up on screen. Rename the speakers, pick a prompt and click **Copy**.
 
 Recordings are saved in `~/Documents/Psiu/`. **Tip:** wear headphones. Without them, your microphone also
 picks up the other voices (Psiu tries to remove that echo, but the result is better with headphones).
@@ -98,6 +99,8 @@ gravador.py            picks the recorder for the current platform
 transcrever.py         sends audio to Deepgram, merges the tracks, removes echo and builds the Markdown
 atalhos.py             global hotkeys (Carbon on macOS, RegisterHotKey on Windows)
 app.py + ui/           user interface (pywebview)
+i18n.py                English/Portuguese strings used by the Python side (the UI's are in ui/index.html)
+config.py              user settings (API key, languages)
 reuniao.py             command-line version
 icon/make_icon.py      generates the icon
 ```
