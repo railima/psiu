@@ -1,112 +1,119 @@
 <p align="center">
-  <img src="icon/icon.png" width="128" alt="Ícone do Psiu">
+  <a href="README.pt-BR.md"><img src="https://img.shields.io/badge/Leia%20em-Portugu%C3%AAs-2e9e5b?style=for-the-badge" alt="Leia em Português"></a>
+</p>
+
+<p align="center">
+  <img src="icon/icon.png" width="128" alt="Psiu icon">
 </p>
 
 <h1 align="center">Psiu</h1>
 
 <p align="center">
-  Grave e transcreva suas reuniões <b>sem bot entrando na chamada</b>.<br>
-  macOS e Windows · Português e inglês · Identificação de quem fala
+  Record and transcribe your meetings <b>without a bot joining the call</b>.<br>
+  macOS and Windows · English and Portuguese · Speaker identification
 </p>
 
 ---
 
-O Psiu grava **o seu microfone** e **o som do computador** direto do sistema, do mesmo jeito que o Audacity
-grava "o que sai da placa de som". Funciona com Google Meet, Zoom, Teams, Slack ou qualquer outra coisa, e
-ninguém vê um "Notetaker" entrando na reunião. No fim, você recebe um transcript com os falantes separados,
-pronto para colar no Claude (ou outra IA) e pedir um resumo, uma lista de tarefas ou um brainstorm.
+Psiu records **your microphone** and **your computer's audio** straight from the operating system, the same
+way Audacity records "what comes out of the sound card". It works with Google Meet, Zoom, Teams, Slack or
+anything else, and nobody sees a "Notetaker" joining the meeting. When you're done, you get a transcript
+with the speakers separated, ready to paste into Claude (or another AI) to ask for a summary, a task list
+or a brainstorm.
 
-## Recursos
+> *Psiu* (pronounced "pee-SEW") is how Brazilians say "psst!": the quiet app that stays out of your meetings.
+> The interface is currently in Portuguese.
 
-- **Sem bot**: captura local do áudio do sistema (ScreenCaptureKit no macOS, WASAPI loopback no Windows).
-- **"Eu" sempre identificado**: microfone e sistema são gravados em trilhas separadas; só as outras vozes
-  passam pela separação de falantes.
-- **PT, EN ou misturado**, com separação de falantes, via [Deepgram](https://deepgram.com) (Nova-3).
-- **Atalhos globais**, com o app minimizado: `⌃⌥R` / `Ctrl+Alt+R` grava e para; `⌃⌥M` / `Ctrl+Alt+M`
-  marca um momento importante. Um som confirma cada ação.
-- **Medidor de volume** ao vivo das duas trilhas (avisa se algo está mudo).
-- **⭐ Marcar momentos** durante a reunião, destacados no transcript.
-- **Renomear falantes** ("Pessoa 1" → "Ana") em todo o transcript.
-- **Copiar com prompt**: resumo e decisões, lista de tarefas, brainstorm ou e-mail de follow-up, com ou sem
-  horários.
-- Histórico com busca, título editável e custo estimado de cada gravação.
+## Features
 
-## Custo
+- **No bot**: local capture of the system audio (ScreenCaptureKit on macOS, WASAPI loopback on Windows).
+- **"Me" is always identified**: microphone and system audio are recorded as separate tracks, so only the
+  other voices go through speaker diarization.
+- **English, Portuguese or mixed**, with speaker diarization, via [Deepgram](https://deepgram.com) (Nova-3).
+- **Global hotkeys** that work while the app is minimized: `⌃⌥R` / `Ctrl+Alt+R` starts and stops recording;
+  `⌃⌥M` / `Ctrl+Alt+M` marks an important moment. A sound confirms each action.
+- **Live level meters** for both tracks (warns you if one of them is silent).
+- **⭐ Mark moments** during the meeting; they are highlighted in the transcript.
+- **Rename speakers** ("Pessoa 1" → "Ana") across the whole transcript.
+- **Copy with a prompt**: summary and decisions, task list, brainstorm or follow-up email, with or without
+  timestamps.
+- Searchable history, editable titles and an estimated cost for each recording.
 
-O Psiu é gratuito; você usa a sua própria chave da Deepgram. O preço do Nova-3 multilíngue para áudio
-gravado é de cerca de **US$ 0,0052/min por trilha**, ou seja, **~US$ 0,60 por hora de reunião** (duas
-trilhas). Confira os valores atuais em [deepgram.com/pricing](https://deepgram.com/pricing). Contas novas
-costumam ganhar créditos grátis.
+## Cost
 
-## Instalação
+Psiu is free; you bring your own Deepgram API key. Nova-3 multilingual for pre-recorded audio costs about
+**US$ 0.0052/min per track**, so roughly **US$ 0.60 per hour of meeting** (two tracks). Check current
+prices at [deepgram.com/pricing](https://deepgram.com/pricing). New accounts usually get free credits.
 
-**Baixe pronto** na página de [Releases](https://github.com/railima/psiu/releases): `Psiu.exe` (Windows) ou
-`Psiu.dmg` (macOS 15+). Ou compile você mesmo:
+## Installation
 
-### macOS (15 ou mais recente)
+**Download a ready-made build** from the [Releases](https://github.com/railima/psiu/releases) page:
+`Psiu.exe` (Windows) or `Psiu.dmg` (macOS 15+). Or build it yourself:
 
-Requer as Xcode Command Line Tools (`xcode-select --install`) e o [uv](https://docs.astral.sh/uv/).
+### macOS (15 or later)
+
+Requires the Xcode Command Line Tools (`xcode-select --install`) and [uv](https://docs.astral.sh/uv/).
 
 ```sh
-./build_mac.sh        # gera dist/Psiu.app e dist/Psiu.dmg
+./build_mac.sh        # creates dist/Psiu.app and dist/Psiu.dmg
 ```
 
-Abra o `.dmg` e arraste o Psiu para Aplicativos. Como o app não é assinado pela Apple, na primeira vez
-clique com o botão direito → **Abrir**. Na primeira gravação, permita **Microfone** e **Gravação de Tela e
-Áudio do Sistema** em Ajustes → Privacidade e Segurança, e reabra o app.
+Open the `.dmg` and drag Psiu into Applications. Since the app isn't signed by Apple, the first time you
+open it right-click → **Open**. On the first recording, allow **Microphone** and **Screen & System Audio
+Recording** in System Settings → Privacy & Security, then reopen the app.
 
 ### Windows 11
 
-Instale o Python (`winget install Python.Python.3.12`), baixe este repositório e dê dois cliques em
-`build_windows.bat`. Ele gera `dist\Psiu.exe`, um executável único que você pode guardar onde quiser.
-O SmartScreen pode avisar na primeira execução: **Mais informações → Executar assim mesmo**.
+Install Python (`winget install Python.Python.3.12`), download this repository and double-click
+`build_windows.bat`. It creates `dist\Psiu.exe`, a single executable you can keep anywhere.
+SmartScreen may warn you the first time: **More info → Run anyway**.
 
-Opcional: `winget install ffmpeg` faz o Psiu comprimir o áudio antes do envio (upload ~8x menor).
+Optional: `winget install ffmpeg` lets Psiu compress the audio before uploading (~8x smaller upload).
 
-## Uso
+## Usage
 
-1. Abra o Psiu e cole a sua API key da Deepgram ([console.deepgram.com](https://console.deepgram.com) →
-   API Keys). Ela fica salva só no seu computador.
-2. Clique no botão vermelho (ou `⌃⌥R` / `Ctrl+Alt+R`) para gravar e de novo para parar.
-3. O transcript aparece na tela. Renomeie os falantes, escolha um prompt e clique em **Copiar**.
+1. Open Psiu and paste your Deepgram API key ([console.deepgram.com](https://console.deepgram.com) →
+   API Keys). It is stored only on your computer.
+2. Click the red button (or press `⌃⌥R` / `Ctrl+Alt+R`) to record, and again to stop.
+3. The transcript shows up on screen. Rename the speakers, pick a prompt and click **Copiar** (Copy).
 
-As gravações ficam em `Documentos/Psiu/`. **Dica:** use fone de ouvido; sem fone, o microfone também capta
-as outras vozes (o Psiu tenta remover esse eco, mas o resultado é melhor com fone).
+Recordings are saved in `~/Documents/Psiu/`. **Tip:** wear headphones. Without them, your microphone also
+picks up the other voices (Psiu tries to remove that echo, but the result is better with headphones).
 
-## Privacidade e responsabilidade
+## Privacy and responsibility
 
-- O áudio é gravado no seu computador e enviado **apenas para a Deepgram**, para a transcrição. Nada passa
-  por servidores do Psiu (não existem).
-- A chave da Deepgram fica em `~/Library/Application Support/Psiu/config.json` (macOS) ou
+- Audio is recorded on your computer and sent **only to Deepgram** for transcription. Nothing goes through
+  Psiu servers (there are none).
+- The Deepgram key is stored in `~/Library/Application Support/Psiu/config.json` (macOS) or
   `%APPDATA%\Psiu\config.json` (Windows).
-- **Avise os participantes** de que a reunião está sendo gravada. As regras de consentimento variam por
-  país e estado, e cumpri-las é responsabilidade de quem grava.
+- **Let participants know** the meeting is being recorded. Consent rules vary by country and state, and
+  complying with them is the responsibility of whoever records.
 
-## Como funciona
+## How it works
 
 ```
-mac/Recorder.swift     gravador nativo do macOS (ScreenCaptureKit: áudio do sistema + microfone)
-gravar_windows.py      gravador do Windows (WASAPI loopback + microfone)
-gravador.py            escolhe o gravador da plataforma
-transcrever.py         envia à Deepgram, junta as trilhas, remove eco e gera o Markdown
-atalhos.py             atalhos globais (Carbon no macOS, RegisterHotKey no Windows)
-app.py + ui/           interface (pywebview)
-reuniao.py             versão de linha de comando
-icon/make_icon.py      gera o ícone
+mac/Recorder.swift     native macOS recorder (ScreenCaptureKit: system audio + microphone)
+gravar_windows.py      Windows recorder (WASAPI loopback + microphone)
+gravador.py            picks the recorder for the current platform
+transcrever.py         sends audio to Deepgram, merges the tracks, removes echo and builds the Markdown
+atalhos.py             global hotkeys (Carbon on macOS, RegisterHotKey on Windows)
+app.py + ui/           user interface (pywebview)
+reuniao.py             command-line version
+icon/make_icon.py      generates the icon
 ```
 
-Para desenvolver sem empacotar: `uv run --with pywebview python app.py` (macOS, depois de `./mac/build.sh`).
-Na linha de comando: `python reuniao.py "nome da reunião"` (Enter para parar).
+To run without packaging: `uv run --with pywebview python app.py` (macOS, after `./mac/build.sh`).
+From the command line: `python reuniao.py "meeting name"` (press Enter to stop).
 
-### Publicar uma versão
+### Publishing a release
 
-O workflow [`build.yml`](.github/workflows/build.yml) compila o `.exe` e o `.dmg` a cada pull request e
-quando rodado manualmente (aba Actions). Para publicar uma Release com os dois anexos:
+The [`build.yml`](.github/workflows/build.yml) workflow builds the `.exe` and the `.dmg` on every pull
+request and when run manually (Actions tab). To publish a Release with both files attached:
 
 ```sh
 git tag v0.1.0 && git push --tags
 ```
 
-## Licença
+## License
 
 [MIT](LICENSE)
