@@ -16,6 +16,15 @@ class RecorderError(Exception):
     pass
 
 
+# Volume RMS (0 a 1) que a voz ultrapassa com folga. Se o microfone nunca passou disso na reunião inteira,
+# ele não captou ninguém (ex.: o padrão do sistema era um microfone virtual desligado).
+MIC_SILENT_RMS = 0.002
+
+
+def mic_was_silent(peaks):
+    return peaks["mic"] < MIC_SILENT_RMS
+
+
 def session_folder(name=""):
     stamp = datetime.now().strftime("%Y-%m-%d_%H%M%S")
     slug = re.sub(r"[^\w-]+", "-", name.strip().lower()).strip("-") if name else ""
@@ -40,6 +49,7 @@ class MacRecorder:
         self.folder = folder
         self.proc = None
         self._levels = {"system": 0.0, "mic": 0.0}
+        self._peaks = {"system": 0.0, "mic": 0.0}
 
     def start(self):
         self.proc = subprocess.Popen(
@@ -57,21 +67,36 @@ class MacRecorder:
             parts = line.split()
             if len(parts) == 3 and parts[0] == "NIVEL":
                 self._levels = {"system": float(parts[1]), "mic": float(parts[2])}
+                self._peaks = {k: max(self._peaks[k], v) for k, v in self._levels.items()}
 
     def levels(self):
         """Volume RMS atual (0 a 1) de cada trilha."""
         return self._levels
+
+    def peaks(self):
+        """Maior volume de cada trilha durante a gravação."""
+        return self._peaks
 
     def stop(self):
         self.proc.send_signal(signal.SIGINT)
         self.proc.wait()
 
 
-def create_recorder(folder):
+def list_microphones():
+    """Microfones que o usuário pode escolher. No macOS o gravador usa o padrão do sistema (lista vazia)."""
+    if sys.platform == "win32":
+        from gravar_windows import list_microphones as windows_list
+
+        return windows_list()
+    return []
+
+
+def create_recorder(folder, mic=None):
+    """`mic`: nome do microfone escolhido (Windows); None usa o padrão do sistema."""
     if sys.platform == "darwin":
         return MacRecorder(folder)
     if sys.platform == "win32":
         from gravar_windows import WindowsRecorder
 
-        return WindowsRecorder(folder)
+        return WindowsRecorder(folder, mic)
     raise RecorderError(t("err_unsupported"))

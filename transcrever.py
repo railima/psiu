@@ -145,7 +145,7 @@ def load_meta(folder):
     """Dados editáveis da gravação: título, nomes dos falantes e momentos marcados."""
     path = Path(folder) / "meta.json"
     meta = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
-    return {"title": "", "names": {}, "marks": [], **meta}
+    return {"title": "", "names": {}, "marks": [], "mic_silent": False, **meta}
 
 
 def save_meta(folder, **values):

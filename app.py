@@ -14,7 +14,7 @@ import webview
 import atalhos
 import i18n
 from config import load_config, save_config
-from gravador import RecorderError, create_recorder, session_folder
+from gravador import RecorderError, create_recorder, list_microphones, mic_was_silent, session_folder
 from i18n import t
 from transcrever import (
     ME,
@@ -94,13 +94,17 @@ class Api:
 
     # Gravação
 
-    def start(self, name, language):
+    def microphones(self):
+        """Microfones para escolher na interface (vazio no macOS) e o escolhido ("" = padrão do sistema)."""
+        return {"devices": list_microphones(), "selected": load_config().get("mic", "")}
+
+    def start(self, name, language, mic=""):
         with self.lock:
-            save_config(language=language)
+            save_config(language=language, mic=mic)
             self.folder = session_folder(name)
             if name.strip():
                 save_meta(self.folder, title=name.strip())
-            self.recorder = create_recorder(self.folder)
+            self.recorder = create_recorder(self.folder, mic or None)
             try:
                 self.recorder.start()
             except RecorderError as e:
@@ -133,6 +137,7 @@ class Api:
         with self.lock:
             if self.recorder:
                 self.recorder.stop()
+                save_meta(self.folder, mic_silent=mic_was_silent(self.recorder.peaks()))
                 self.recorder = None
         return self.transcribe(str(self.folder), language)
 
@@ -202,6 +207,7 @@ class Api:
             "name": folder.name,
             "title": meta["title"],
             "marks": meta["marks"],
+            "mic_silent": meta["mic_silent"],
             "lines": lines,
             "speakers": speakers,
             "me": ME,

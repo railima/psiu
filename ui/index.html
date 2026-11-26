@@ -175,6 +175,10 @@
         <option value="pt-BR" data-i18n="lang_pt"></option>
       </select>
     </div>
+    <!-- Escolha de microfone: só aparece quando o sistema lista microfones (Windows) -->
+    <div class="row" id="mic-row" hidden>
+      <select id="mic" data-i18n-title="mic_label" style="flex:1"></select>
+    </div>
     <p class="muted" data-i18n="idle_tip"></p>
     <p class="muted hotkey-hint" id="hk-idle"></p>
     <p class="error" id="start-error"></p>
@@ -219,6 +223,7 @@
       <div>
         <input id="title" spellcheck="false" onchange="saveTitle()" onkeydown="if(event.key==='Enter')this.blur()">
         <div class="stats" id="stats"></div>
+        <p class="error" id="mic-warning" hidden></p>
       </div>
       <div class="speakers" id="speakers"></div>
       <div class="toolbar">
@@ -245,6 +250,8 @@
       setup_text: 'Paste your Deepgram API key (console.deepgram.com → API Keys). It is stored only on this computer.',
       save: 'Save', start_title: 'Start recording', name_placeholder: 'Meeting name (optional)',
       transcription_language: 'Transcription language', lang_multi: 'EN + PT', lang_en: 'English', lang_pt: 'Portuguese',
+      mic_label: 'Microphone', mic_default: 'Microphone: system default',
+      mic_silent: "⚠️ Your microphone recorded only silence, so your voice isn't in this transcript. Check which microphone is selected on the recording screen (it may be a virtual device, like a webcam app that is closed).",
       idle_tip: "Records your microphone and your computer's sound, without joining the call. Use headphones for better results.",
       change_key: 'Change API key', stop_title: 'Stop recording',
       meter_you: 'You', meter_computer: 'Computer', silent: 'silent',
@@ -270,6 +277,8 @@
       setup_text: 'Cole a sua API key da Deepgram (console.deepgram.com → API Keys). Ela fica salva só neste computador.',
       save: 'Salvar', start_title: 'Iniciar gravação', name_placeholder: 'Nome da reunião (opcional)',
       transcription_language: 'Idioma da transcrição', lang_multi: 'EN + PT', lang_en: 'Inglês', lang_pt: 'Português',
+      mic_label: 'Microfone', mic_default: 'Microfone: padrão do sistema',
+      mic_silent: '⚠️ O seu microfone gravou só silêncio, então a sua voz não está neste transcript. Confira qual microfone está escolhido na tela de gravação (pode ser um dispositivo virtual, como um app de webcam fechado).',
       idle_tip: 'Grava o seu microfone e o som do computador, sem entrar na chamada. Use fone de ouvido para um resultado melhor.',
       change_key: 'Trocar API key', stop_title: 'Parar gravação',
       meter_you: 'Você', meter_computer: 'Computador', silent: 'em silêncio',
@@ -419,6 +428,7 @@
   async function setUiLanguage(value) {
     await api.set_ui_language(value);
     await refresh();
+    loadMicrophones();
     // Nomes padrão dos falantes ("Speaker 1"/"Pessoa 1") vêm do Python no idioma atual.
     if (current && current.lines && !recording) current = await api.open_recording(current.folder);
     if (current && current.lines && document.querySelector('#v-result.active')) renderResult();
@@ -462,7 +472,7 @@
     $('start-error').textContent = '';
     if (recording || transcribing) return false;
     if (!hasKey) { show('setup'); return false; }
-    const r = await api.start($('name').value, $('language').value);
+    const r = await api.start($('name').value, $('language').value, $('mic').value);
     if (r.error) { show('idle'); $('start-error').textContent = r.error; return false; }
     recording = true;
     const t0 = Date.now();
@@ -550,6 +560,8 @@
     const parts = [t('minutes', { n: mins }), n === 1 ? t('participants_one') : t('participants_other', { n }), t('cost', { cost })];
     if (r.marks.length) parts.splice(2, 0, `${r.marks.length} ⭐`);
     $('stats').textContent = parts.join(' · ');
+    $('mic-warning').textContent = t('mic_silent');
+    $('mic-warning').hidden = !r.mic_silent;
 
     const sp = $('speakers');
     sp.innerHTML = '';
@@ -621,9 +633,20 @@
   });
 
   applyI18n();
+  async function loadMicrophones() {
+    const { devices, selected } = await api.microphones();
+    const select = $('mic');
+    select.innerHTML = '';
+    select.append(el('option', { value: '', textContent: t('mic_default') }));
+    for (const name of devices) select.append(el('option', { value: name, textContent: name }));
+    select.value = devices.includes(selected) ? selected : '';
+    $('mic-row').hidden = !devices.length;
+  }
+
   window.addEventListener('pywebviewready', async () => {
     api = window.pywebview.api;
     const s = await refresh();
+    loadMicrophones();
     show(s.has_key ? 'idle' : 'setup');
   });
 </script>

@@ -21,6 +21,7 @@ class _Track:
         self.factor = rate // 16000 if rate % 16000 == 0 else 1
         self.pending = np.zeros(0, dtype=np.float32)
         self.level = 0.0  # volume RMS (0 a 1) do último bloco, para o medidor da interface
+        self.peak = 0.0  # maior volume da gravação, para avisar quando o microfone não captou nada
         self.wav = wave.open(str(path), "wb")
         self.wav.setnchannels(1)
         self.wav.setsampwidth(2)
@@ -33,6 +34,7 @@ class _Track:
             samples = samples.reshape(-1, self.channels).mean(axis=1)
         if len(samples):
             self.level = float(np.sqrt(np.mean(samples ** 2)) / 32768)
+            self.peak = max(self.peak, self.level)
         if self.factor > 1:
             samples = np.concatenate([self.pending, samples])
             usable = len(samples) - len(samples) % self.factor
@@ -47,9 +49,27 @@ class _Track:
             self.wav.close()
 
 
+def _input_devices(pa):
+    """Microfones do WASAPI (sem os dispositivos de loopback)."""
+    wasapi = pa.get_host_api_info_by_type(pyaudio.paWASAPI)["index"]
+    for i in range(pa.get_device_count()):
+        dev = pa.get_device_info_by_index(i)
+        if dev["hostApi"] == wasapi and dev["maxInputChannels"] > 0 and not dev.get("isLoopbackDevice"):
+            yield dev
+
+
+def list_microphones():
+    pa = pyaudio.PyAudio()
+    try:
+        return [dev["name"] for dev in _input_devices(pa)]
+    finally:
+        pa.terminate()
+
+
 class WindowsRecorder:
-    def __init__(self, output_dir):
+    def __init__(self, output_dir, mic_name=None):
         self.output_dir = output_dir
+        self.mic_name = mic_name  # None ou nome que não existe mais: usa o microfone padrão do Windows
         self.pa = pyaudio.PyAudio()
         self.streams = []
         self.tracks = []
@@ -67,7 +87,8 @@ class WindowsRecorder:
         wasapi = self.pa.get_host_api_info_by_type(pyaudio.paWASAPI)
         speakers = self.pa.get_device_info_by_index(wasapi["defaultOutputDevice"])
         loopback = self._loopback_for(speakers)
-        mic = self.pa.get_device_info_by_index(wasapi["defaultInputDevice"])
+        mic = next((d for d in _input_devices(self.pa) if d["name"] == self.mic_name), None) \
+            or self.pa.get_device_info_by_index(wasapi["defaultInputDevice"])
 
         print(f"  Sistema: {speakers['name']}")
         print(f"  Microfone: {mic['name']}")
@@ -104,6 +125,11 @@ class WindowsRecorder:
         """Volume RMS atual (0 a 1) de cada trilha."""
         system, mic = self.tracks
         return {"system": system.level, "mic": mic.level}
+
+    def peaks(self):
+        """Maior volume de cada trilha durante a gravação."""
+        system, mic = self.tracks
+        return {"system": system.peak, "mic": mic.peak}
 
     def _loopback_for(self, speakers):
         if speakers.get("isLoopbackDevice"):
